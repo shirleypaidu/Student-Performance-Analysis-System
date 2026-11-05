@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% block title %}Students · StudentInsight{% endblock %}
+{% block section_label %}STUDENTS{% endblock %}
+{% block content %}
+<div class="page-heading"><p class="eyebrow">RECORD MANAGEMENT / 02</p><h1>Student directory</h1><p class="subtext">Profiles, sections and assessment activity in one roster.</p></div>
+<section class="panel form-panel">
+	<div class="panel-head"><div><p class="eyebrow">NEW PROFILE</p><h2>Add a student</h2></div><span class="tag">PROFILE ENTRY</span></div>
+	<form class="form-row" method="post" action="{{ url_for('add_student') }}">
+		<label class="form-field">Roll number<input name="roll_no" placeholder="e.g. S107" required></label>
+		<label class="form-field">Student name<input name="name" placeholder="Full name" required></label>
+		<label class="form-field">Section<input name="section" placeholder="e.g. A" required></label>
+		<button class="button" type="submit"><span aria-hidden="true">＋</span> Add profile</button>
+	</form>
+</section>
+<section class="panel table-panel">
+	<div class="panel-head table-panel-head"><div><p class="eyebrow">ROSTER</p><h2>Students</h2></div>
+		<div class="table-tools"><label class="search-box"><span aria-hidden="true">⌕</span><input type="search" data-table-filter="student-table" aria-label="Search students" placeholder="Find a student"></label><span class="tag" data-result-count="student-table">{{ students|length }} RECORDS</span></div>
+	</div>
+	<div class="table-wrap"><table id="student-table"><thead><tr><th>Roll no.</th><th>Name</th><th>Section</th><th>Assessments</th><th>Update profile</th><th>Remove</th></tr></thead><tbody>
+	{% for s in students %}<tr data-filter-row><td><span class="roll-chip">{{ s.roll_no }}</span></td><td class="name-cell">{{ s.name }}</td><td><span class="section-chip">{{ s.section }}</span></td><td>{{ s.assessments }}</td>
+	<td><form class="inline-form" method="post" action="{{ url_for('update_student',student_id=s.student_id) }}"><input aria-label="Roll number" name="roll_no" value="{{ s.roll_no }}" required><input aria-label="Student name" name="name" value="{{ s.name }}" required><input aria-label="Section" name="section" value="{{ s.section }}" required><button class="tiny-button">Save</button></form></td>
+	<td><form method="post" action="{{ url_for('delete_student',student_id=s.student_id) }}" onsubmit="return confirm('Delete this student and their marks?')"><button class="tiny-button danger">Delete</button></form></td></tr>
+	{% else %}<tr><td colspan="6" class="empty">No students yet. Add the first profile above.</td></tr>{% endfor %}
+	</tbody></table></div>
+</section>{% endblock %}

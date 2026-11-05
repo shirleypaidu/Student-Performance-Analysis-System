@@ -1,0 +1,2 @@
+{% extends "base.html" %}{% block title %}Database setup needed{% endblock %}
+{% block content %}<section class="panel error-panel"><p class="eyebrow">SETUP REQUIRED</p><h1>Database connection not ready</h1><p>Flask started, but it could not connect to MySQL.</p><pre>{{ error }}</pre><p>Follow the database setup steps in README.md, then refresh this page.</p></section>{% endblock %}

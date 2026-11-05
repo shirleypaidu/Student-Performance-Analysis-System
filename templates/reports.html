@@ -1,0 +1,43 @@
+{% extends "base.html" %}{% block title %}Reports · StudentInsight{% endblock %}
+{% block section_label %}REPORTS{% endblock %}
+{% block content %}
+<div class="page-heading"><p class="eyebrow">DATA & INSIGHTS</p><h1>Performance reports</h1><p class="subtext">Summaries calculated from records stored in MySQL.</p></div>
+<section class="panel table-panel"><div class="panel-head table-panel-head"><div><p class="eyebrow">CLASS BREAKDOWN</p><h2>Student performance</h2></div><div class="table-tools"><label class="search-box"><span aria-hidden="true">⌕</span><input type="search" data-table-filter="report-students" aria-label="Search student reports" placeholder="Find a student"></label><span class="tag" data-result-count="report-students">{{ students|length }} STUDENTS</span></div></div><div class="table-wrap"><table id="report-students"><thead><tr><th>Roll no.</th><th>Name</th><th>Section</th><th>Total marks</th><th>Average</th><th>Grade</th><th>Indicator</th></tr></thead><tbody>
+{% for s in students %}<tr data-filter-row><td><span class="roll-chip">{{ s.roll_no }}</span></td><td class="name-cell">{{ s.name }}</td><td>{{ s.section }}</td><td>{{ s.total_marks }} / {{ s.max_total }}</td><td class="score-cell">{{ s.average_percentage }}%</td><td><span class="grade">{{ s.grade }}</span></td><td><span class="status {{ 'good' if s.status == 'Pass' else 'needs' }}">{{ s.status }}</span></td></tr>{% else %}<tr><td colspan="7" class="empty">Enter marks to generate the student report.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section class="panel table-panel"><div class="panel-head"><div><p class="eyebrow">SUBJECT BREAKDOWN</p><h2>Subject statistics</h2></div></div><div class="table-wrap"><table><thead><tr><th>Subject</th><th>Mean marks</th><th>Median</th><th>Min</th><th>Max</th><th>Pass rate</th></tr></thead><tbody>{% for s in subjects %}<tr><td class="name-cell">{{ s.subject }}</td><td>{{ s.average }}</td><td>{{ s.median }}</td><td>{{ s.minimum }}</td><td>{{ s.maximum }}</td><td class="score-cell">{{ s.pass_rate }}%</td></tr>{% else %}<tr><td colspan="6" class="empty">No subject data.</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="report-chart-grid">
+	<article class="panel"><div class="panel-head"><div><p class="eyebrow">SUBJECT COMPARISON</p><h2>Average score & pass rate</h2></div><span class="tag">LIVE RECORDS</span></div><div class="chart-frame"><canvas id="report-subject-chart" role="img" aria-label="Average percentage and pass rate by subject"></canvas></div></article>
+	<article class="panel"><div class="panel-head"><div><p class="eyebrow">STUDENT COMPARISON</p><h2>Average by student</h2></div><span class="tag">{{ students|length }} STUDENTS</span></div><div class="chart-frame student-chart"><canvas id="report-student-chart" role="img" aria-label="Average assessment percentage for each student"></canvas></div></article>
+	<article class="panel grade-chart-panel"><div class="panel-head"><div><p class="eyebrow">GRADE MIX</p><h2>Class grade distribution</h2></div></div><div class="chart-frame compact"><canvas id="report-grade-chart" role="img" aria-label="Number of students in each grade band"></canvas></div></article>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+	const reportSubjects = {{ subjects|tojson }};
+	const reportStudents = {{ students|tojson }}.sort((a, b) => a.average_percentage - b.average_percentage);
+	const gradeOrder = ["A+", "A", "B", "C", "D", "F"];
+	const gradeCounts = gradeOrder.map((grade) => reportStudents.filter((student) => student.grade === grade).length);
+	const reportAxis = { grid: { color: "#e8ede7", drawBorder: false }, border: { display: false }, ticks: { padding: 8 } };
+
+	new Chart(document.getElementById("report-subject-chart"), {
+		type: "bar",
+		data: { labels: reportSubjects.map((subject) => subject.subject), datasets: [
+			{ label: "Average (%)", data: reportSubjects.map((subject) => subject.average_percentage), backgroundColor: "#4268ef", borderRadius: 3, maxBarThickness: 26 },
+			{ label: "Pass rate (%)", data: reportSubjects.map((subject) => subject.pass_rate), backgroundColor: "#d5f064", borderRadius: 3, maxBarThickness: 26 }
+		] },
+		options: { maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { usePointStyle: true, pointStyle: "circle", padding: 18 } } }, scales: { y: { ...reportAxis, min: 0, max: 100, ticks: { ...reportAxis.ticks, callback: (value) => `${value}%` } }, x: { ...reportAxis, grid: { display: false } } } }
+	});
+
+	new Chart(document.getElementById("report-student-chart"), {
+		type: "bar",
+		data: { labels: reportStudents.map((student) => `${student.name} (${student.roll_no})`), datasets: [{ label: "Average (%)", data: reportStudents.map((student) => student.average_percentage), backgroundColor: reportStudents.map((student) => student.average_percentage < 40 ? "#e87558" : "#173a30"), borderRadius: 3, maxBarThickness: 20 }] },
+		options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (item) => ` ${item.raw}% average` } } }, scales: { x: { ...reportAxis, min: 0, max: 100, ticks: { ...reportAxis.ticks, callback: (value) => `${value}%` } }, y: { ...reportAxis, grid: { display: false } } } }
+	});
+
+	new Chart(document.getElementById("report-grade-chart"), {
+		type: "doughnut",
+		data: { labels: gradeOrder, datasets: [{ data: gradeCounts, backgroundColor: ["#173a30", "#4268ef", "#79a45c", "#d5f064", "#e9ad48", "#e87558"], borderWidth: 0, hoverOffset: 5 }] },
+		options: { maintainAspectRatio: false, cutout: "68%", plugins: { legend: { position: "bottom", labels: { usePointStyle: true, pointStyle: "circle", padding: 10 } } } }
+	});
+</script>
+{% endblock %}

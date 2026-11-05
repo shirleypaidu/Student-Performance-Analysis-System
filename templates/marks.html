@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}Marks · StudentInsight{% endblock %}
+{% block section_label %}MARKS{% endblock %}
+{% block content %}
+<div class="page-heading"><p class="eyebrow">ASSESSMENT RECORDS / 04</p><h1>Marks ledger</h1><p class="subtext">Record and review assessment results across the class.</p></div>
+<section class="panel form-panel"><div class="panel-head"><div><p class="eyebrow">NEW ASSESSMENT</p><h2>Record marks</h2></div><span class="tag">ENTRY FORM</span></div>
+{% if students and subjects %}<form class="form-row" method="post" action="{{ url_for('add_mark') }}">
+<label class="form-field">Student<select name="student_id" required><option value="">Select student</option>{% for s in students %}<option value="{{ s.student_id }}">{{ s.roll_no }} · {{ s.name }}</option>{% endfor %}</select></label>
+<label class="form-field">Subject<select name="subject_id" required><option value="">Select subject</option>{% for s in subjects %}<option value="{{ s.subject_id }}">{{ s.subject_name }} (max {{ s.max_marks }})</option>{% endfor %}</select></label>
+<label class="form-field">Assessment<input name="assessment" value="Internal 1" placeholder="e.g. Midterm" required></label>
+<label class="form-field">Score<input type="number" name="marks_obtained" min="0" step="0.5" placeholder="0.0" required></label><button class="button"><span aria-hidden="true">＋</span> Save result</button></form>
+{% else %}<p class="empty">Add at least one student and one subject before entering marks.</p>{% endif %}</section>
+<section class="panel table-panel"><div class="panel-head table-panel-head"><div><p class="eyebrow">LATEST ACTIVITY</p><h2>Assessment ledger</h2></div>
+	<div class="table-tools"><label class="search-box"><span aria-hidden="true">⌕</span><input type="search" data-table-filter="marks-table" aria-label="Search assessments" placeholder="Find a record"></label><span class="tag" data-result-count="marks-table">{{ marks|length }} RECORDS</span></div>
+</div><div class="table-wrap"><table id="marks-table"><thead><tr><th>Roll no.</th><th>Student</th><th>Section</th><th>Subject</th><th>Assessment</th><th>Marks</th><th></th></tr></thead><tbody>
+{% for m in marks %}<tr data-filter-row><td><span class="roll-chip">{{ m.roll_no }}</span></td><td class="name-cell">{{ m.name }}</td><td>{{ m.section }}</td><td>{{ m.subject_name }}</td><td>{{ m.assessment }}</td><td class="score-cell">{{ m.marks_obtained }} <span>/ {{ m.max_marks }}</span></td><td><form method="post" action="{{ url_for('delete_mark',mark_id=m.mark_id) }}" onsubmit="return confirm('Delete this assessment record?')"><button class="tiny-button danger">Delete</button></form></td></tr>{% else %}<tr><td colspan="7" class="empty">No marks entered yet.</td></tr>{% endfor %}
+</tbody></table></div></section>{% endblock %}

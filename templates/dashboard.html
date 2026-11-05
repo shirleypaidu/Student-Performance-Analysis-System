@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · StudentInsight{% endblock %}
+{% block section_label %}OVERVIEW{% endblock %}
+{% block content %}
+<section class="hero">
+  <div><p class="eyebrow">CLASS SIGNAL / 01</p><h1>Know where your class <span>stands.</span></h1>
+  <p class="subtext">A live view of student progress, subject results and assessment outcomes.</p></div>
+  <div class="hero-score" aria-label="Class average {{ data.class_average }} percent">
+    <span>CLASS AVERAGE</span><strong>{{ data.class_average }}<small>%</small></strong>
+    <div class="hero-meter" aria-hidden="true"><span style="width: {{ [data.class_average, 100]|min }}%"></span></div>
+  </div>
+</section>
+<div class="section-heading"><div><p class="eyebrow">AT A GLANCE</p><h2>Class snapshot</h2></div><a class="button secondary" href="{{ url_for('reports') }}">Explore reports <span aria-hidden="true">↗</span></a></div>
+<section class="stats-grid">
+  <article class="stat-card"><span class="stat-icon">♙</span><p>Total students</p><strong>{{ data.student_count }}</strong><small>Student profiles</small></article>
+  <article class="stat-card"><span class="stat-icon">▤</span><p>Subjects</p><strong>{{ data.subject_count }}</strong><small>Available subjects</small></article>
+  <article class="stat-card"><span class="stat-icon">◉</span><p>Class average</p><strong>{{ data.class_average }}<em>%</em></strong><small>Mean student percentage</small></article>
+  <article class="stat-card"><span class="stat-icon">✓</span><p>Pass rate</p><strong>{{ data.pass_rate }}<em>%</em></strong><small>Of recorded assessment marks</small></article>
+</section>
+<section class="content-grid">
+  <article class="panel wide"><div class="panel-head"><div><p class="eyebrow">SUBJECT INSIGHTS</p><h2>Average score by subject</h2></div><span class="tag">NORMALIZED %</span></div>
+    <div class="chart-frame"><canvas id="subject-chart" role="img" aria-label="Average assessment percentage by subject"></canvas></div>
+    <p class="chart-note">Average assessment percentage keeps subjects with different maximum marks comparable.</p>
+  </article>
+  <article class="panel"><div class="panel-head"><div><p class="eyebrow">CLASS OUTCOME</p><h2>Assessment results</h2></div></div>
+    <div class="chart-frame compact"><canvas id="outcome-chart" role="img" aria-label="Count of passed and failed assessment records"></canvas></div>
+    <div class="mini-row"><span>Top average</span><strong>{{ data.topper }}</strong></div>
+    <div class="mini-row"><span>Below 40% average</span><strong>{{ data.low_performers }}</strong></div>
+  </article>
+</section>
+<section class="panel student-chart-panel"><div class="panel-head"><div><p class="eyebrow">STUDENT PROGRESS</p><h2>Average by student</h2></div><span class="tag">{{ data.student_averages|length }} STUDENTS</span></div>
+  <div class="chart-frame student-chart"><canvas id="student-chart" role="img" aria-label="Average assessment percentage for each student"></canvas></div>
+</section>
+<section class="quick-links"><a href="{{ url_for('students') }}">＋ Add student</a><a href="{{ url_for('marks') }}">＋ Enter marks</a><a href="{{ url_for('subjects') }}">＋ Add subject</a></section>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+  const subjectSeries = {{ data.subject_averages|tojson }};
+  const studentSeries = {{ data.student_averages|tojson }};
+  const outcomeSeries = {{ data.pass_fail|tojson }};
+
+  Chart.defaults.font.family = "Manrope, sans-serif";
+  Chart.defaults.color = "#64736a";
+  const axis = { grid: { color: "#e8ede7", drawBorder: false }, border: { display: false }, ticks: { padding: 8 } };
+
+  new Chart(document.getElementById("subject-chart"), {
+    type: "bar",
+    data: {
+      labels: subjectSeries.map((item) => item.subject),
+      datasets: [{ label: "Average (%)", data: subjectSeries.map((item) => item.average_percentage), backgroundColor: ["#d5f064", "#e87558", "#4268ef", "#79a45c", "#85a8d7"], borderRadius: 3, maxBarThickness: 32 }]
+    },
+    options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (item) => ` ${item.raw}% average` } } }, scales: { x: { ...axis, min: 0, max: 100, ticks: { ...axis.ticks, callback: (value) => `${value}%` } }, y: { ...axis, grid: { display: false } } } }
+  });
+
+  new Chart(document.getElementById("outcome-chart"), {
+    type: "doughnut",
+    data: { labels: ["Pass", "Fail"], datasets: [{ data: [outcomeSeries.Pass, outcomeSeries.Fail], backgroundColor: ["#173a30", "#e87558"], borderWidth: 0, hoverOffset: 5 }] },
+    options: { maintainAspectRatio: false, cutout: "72%", plugins: { legend: { position: "bottom", labels: { usePointStyle: true, pointStyle: "circle", padding: 18 } } } }
+  });
+
+  new Chart(document.getElementById("student-chart"), {
+    type: "bar",
+    data: { labels: studentSeries.map((item) => item.label), datasets: [{ label: "Average (%)", data: studentSeries.map((item) => item.average), backgroundColor: studentSeries.map((item) => item.average < 40 ? "#e87558" : "#4268ef"), borderRadius: 3, maxBarThickness: 24 }] },
+    options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (item) => ` ${item.raw}% average` } } }, scales: { x: { ...axis, min: 0, max: 100, ticks: { ...axis.ticks, callback: (value) => `${value}%` } }, y: { ...axis, grid: { display: false } } } }
+  });
+</script>
+{% endblock %}

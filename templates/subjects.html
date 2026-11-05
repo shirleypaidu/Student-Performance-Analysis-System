@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% block title %}Subjects · StudentInsight{% endblock %}
+{% block section_label %}SUBJECTS{% endblock %}
+{% block content %}
+<div class="page-heading"><p class="eyebrow">ACADEMIC SETUP / 03</p><h1>Subject catalogue</h1><p class="subtext">Define assessment scales and pass thresholds for each subject.</p></div>
+<section class="panel form-panel">
+	<div class="panel-head"><div><p class="eyebrow">CATALOGUE ENTRY</p><h2>Add a subject</h2></div><span class="tag">ASSESSMENT SCALE</span></div>
+	<form class="form-row" method="post" action="{{ url_for('add_subject') }}">
+		<label class="form-field">Subject name<input name="subject_name" placeholder="e.g. Biology" required></label>
+		<label class="form-field">Maximum marks<input type="number" name="max_marks" min="1" value="100" required></label>
+		<label class="form-field">Pass marks<input type="number" name="pass_marks" min="0" value="40" required></label>
+		<button class="button"><span aria-hidden="true">＋</span> Add subject</button>
+	</form>
+</section>
+<section class="panel table-panel">
+	<div class="panel-head table-panel-head"><div><p class="eyebrow">ACTIVE CATALOGUE</p><h2>Subjects</h2></div>
+		<div class="table-tools"><label class="search-box"><span aria-hidden="true">⌕</span><input type="search" data-table-filter="subject-table" aria-label="Search subjects" placeholder="Find a subject"></label><span class="tag" data-result-count="subject-table">{{ subjects|length }} SUBJECTS</span></div>
+	</div>
+	<div class="table-wrap"><table id="subject-table"><thead><tr><th>Code</th><th>Subject</th><th>Maximum marks</th><th>Pass threshold</th></tr></thead><tbody>
+	{% for s in subjects %}<tr data-filter-row><td><span class="roll-chip">{{ "%02d"|format(s.subject_id) }}</span></td><td class="name-cell">{{ s.subject_name }}</td><td>{{ s.max_marks }}</td><td><span class="section-chip">{{ s.pass_marks }}</span></td></tr>{% else %}<tr><td colspan="4" class="empty">No subjects found.</td></tr>{% endfor %}
+	</tbody></table></div>
+</section>{% endblock %}
